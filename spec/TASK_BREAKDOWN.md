@@ -12,20 +12,21 @@ Codex should not attempt to build the whole app in one pass. Each task should pr
 
 ## 2. Execution Rules for Codex
 
-1. Read `spec/MVP_SPEC.md`, `spec/ARCHITECTURE.md`, and this file before implementation.
+1. Read `README.md`, `design.md`, `spec/MVP_SPEC.md`, `spec/ARCHITECTURE.md`, `spec/ACCEPTANCE.md`, `spec/APK_PLAN.md`, `spec/CODEX_WORKFLOW.md`, and this file before implementation.
 2. Create implementation work on a feature branch, preferably `feat/fitness-mvp-v1`.
 3. Complete one task at a time.
 4. Keep each task small and testable.
 5. Do not add out-of-scope features.
-6. Do not introduce login, payments, social sharing, cloud sync, or wearable integration.
-7. Prefer mock AI first, then real AI integration later.
-8. After each task, report changed files, build result, and remaining risks.
+6. Do not introduce login, payments, social sharing, cloud sync, wearable integration, marketplace, or computer vision posture detection.
+7. Prefer local mock AI first, then add configurable remote AI through Settings.
+8. Do not hard-code or commit real remote AI credentials.
+9. After each task, report changed files, build result, APK path if available, tests run, and remaining risks.
 
 ## 3. Recommended Branch Workflow
 
 ```text
 main
-└── spec/fitness-mvp-v1      # product and engineering contract
+└── spec/fitness-mvp-v1      # product, design, and engineering contract
 └── feat/fitness-mvp-v1      # implementation branch created from spec or main after spec is merged
 ```
 
@@ -41,6 +42,7 @@ Preferred implementation path:
 ## Task 01: Initialize Android Project
 
 ### Goal
+
 Create a clean native Android project using Kotlin and Jetpack Compose.
 
 ### Requirements
@@ -51,24 +53,27 @@ Create a clean native Android project using Kotlin and Jetpack Compose.
 - Add Material 3 dependency.
 - Add app package namespace, for example `com.qinze.fitnessai`.
 - Create `MainActivity`.
-- Show a simple placeholder home screen.
+- Create initial Material 3 theme tokens aligned with `design.md`.
+- Show a simple placeholder Home screen.
 
 ### Done When
 
 - Project opens as an Android project.
 - App can build.
 - App can launch and show placeholder screen.
+- Placeholder uses Material 3 and does not ignore `design.md`.
 
 ### Do Not Do
 
 - Do not implement business logic yet.
-- Do not add AI API integration yet.
+- Do not add AI network integration yet.
 
 ---
 
 ## Task 02: App Navigation Skeleton
 
 ### Goal
+
 Create the app navigation foundation.
 
 ### Requirements
@@ -76,15 +81,17 @@ Create the app navigation foundation.
 - Add Navigation Compose.
 - Create bottom navigation with:
   - Home;
-  - Calendar;
   - Workout;
+  - Calendar;
   - Diet;
   - Settings.
 - Add secondary placeholder routes:
   - Exercise Detail;
   - Daily Check-in;
-  - AI Review;
-  - Analytics.
+  - AI Advice;
+  - Analytics;
+  - AI Settings.
+- Every placeholder screen should have clear title, purpose text, and not-dead-end navigation.
 
 ### Done When
 
@@ -97,6 +104,7 @@ Create the app navigation foundation.
 ## Task 03: Core Data Models
 
 ### Goal
+
 Create Kotlin domain models for the MVP.
 
 ### Requirements
@@ -108,8 +116,10 @@ Create models for:
 - Exercise;
 - WorkoutExerciseLog;
 - DailyReview;
+- AIAdvice;
 - DietLog;
-- AppSettings.
+- AppSettings;
+- AIProviderSettings.
 
 ### Done When
 
@@ -122,6 +132,7 @@ Create models for:
 ## Task 04: Local Database Foundation
 
 ### Goal
+
 Set up Room database for local-first storage.
 
 ### Requirements
@@ -143,6 +154,7 @@ Set up Room database for local-first storage.
 ## Task 05: Seed Exercise Library
 
 ### Goal
+
 Add initial static exercise data.
 
 ### Initial Exercises
@@ -183,6 +195,7 @@ Add initial static exercise data.
 ## Task 06: Workout Plan Generation
 
 ### Goal
+
 Create preset weekly plans.
 
 ### Requirements
@@ -203,6 +216,7 @@ Create preset weekly plans.
 ## Task 07: Home Dashboard
 
 ### Goal
+
 Show useful starting information on app launch.
 
 ### Requirements
@@ -213,20 +227,24 @@ Display:
 - next reminder time;
 - current weekly plan type;
 - latest daily score;
-- latest AI suggestion placeholder;
+- latest AI suggestion preview or not-configured state;
 - quick button to today’s workout.
+
+Follow `design.md` Home Dashboard contract.
 
 ### Done When
 
 - Home screen reads data from repository/ViewModel.
 - Empty state is handled clearly.
 - User can navigate to today’s workout.
+- UI is card-based and matches `design.md`.
 
 ---
 
 ## Task 08: Today Workout Screen
 
 ### Goal
+
 Implement workout execution flow.
 
 ### Requirements
@@ -240,6 +258,7 @@ Implement workout execution flow.
   - completed;
   - skipped.
 - Allow RPE input, 1 to 10.
+- Use distinct visual states for completed and skipped exercises.
 
 ### Done When
 
@@ -252,6 +271,7 @@ Implement workout execution flow.
 ## Task 09: Exercise Detail Screen
 
 ### Goal
+
 Make exercise information useful.
 
 ### Requirements
@@ -277,6 +297,7 @@ Display:
 ## Task 10: Daily Score Calculation
 
 ### Goal
+
 Implement simple scoring.
 
 ### Formula
@@ -301,6 +322,7 @@ Where:
 ## Task 11: Daily Check-in Screen
 
 ### Goal
+
 Collect post-workout user feedback.
 
 ### Requirements
@@ -314,6 +336,7 @@ Collect post-workout user feedback.
   - pain or discomfort;
   - diet notes.
 - Save check-in locally.
+- After save, show action to generate AI advice.
 
 ### Done When
 
@@ -323,59 +346,111 @@ Collect post-workout user feedback.
 
 ---
 
-## Task 12: Mock AI Review
+## Task 12: Local Mock AI Advice
 
 ### Goal
-Add AI review flow without depending on real API.
+
+Add AI advice flow without depending on a remote provider.
 
 ### Requirements
 
-- Create `AIService` interface.
-- Create `MockAIService` implementation.
-- Generate deterministic sample feedback based on completion and summary.
-- Show AI review result card.
+- Create app-level AI advice interface.
+- Create local mock implementation.
+- Generate deterministic sample feedback based on completion, RPE, pain/fatigue terms, diet notes, and summary.
+- Show AI advice result cards.
+- Save generated advice locally if persistence is already available.
 
 ### Done When
 
-- User can tap generate review.
-- App displays mock AI review.
-- App does not require API key.
+- User can tap generate advice.
+- App displays local AI-style advice.
+- App does not require remote configuration.
+- Warning terms produce cautious output.
 
 ---
 
-## Task 13: Real AI Service Adapter
+## Task 13: AI Settings Screen and Provider Configuration
 
 ### Goal
-Prepare real LLM integration behind service layer.
+
+Let the user optionally configure a real remote AI provider inside the app.
 
 ### Requirements
 
-- Add remote service implementation.
-- Read API configuration from settings or build config, not hard-coded in source.
-- Send structured input.
-- Parse structured output.
-- Handle errors gracefully.
+- Add AI Settings screen under Settings.
+- Add provider selector:
+  - Local Mock;
+  - DeepSeek;
+  - OpenAI Compatible.
+- Add fields for:
+  - enable remote AI toggle;
+  - base URL;
+  - model;
+  - local credential input with masked display;
+  - test connection;
+  - clear credential.
+- Persist provider settings locally.
+- Do not hard-code or commit real credentials.
+- Do not print full credentials in logs.
+- If no remote provider is configured, app must still work with local mock AI.
+
+### Recommended Defaults
+
+```text
+Provider: Local Mock
+DeepSeek Base URL: https://api.deepseek.com
+DeepSeek Model: deepseek-v4-flash
+```
 
 ### Done When
 
-- Real provider can be plugged in without UI rewrite.
+- User can open AI Settings.
+- User can save provider settings.
+- User can clear local credential.
+- AI-not-configured state is understandable.
+- No remote provider is required for normal workout flow.
+
+---
+
+## Task 14: DeepSeek / OpenAI-Compatible AI Client
+
+### Goal
+
+Implement real remote advice generation using the configured provider.
+
+### Requirements
+
+- Add DeepSeek/OpenAI-compatible client using OkHttp or Retrofit.
+- Send structured daily advice input.
+- Parse structured output into app model.
+- Handle network failure, provider error, invalid response, and missing configuration.
+- Keep previous local data intact if the request fails.
+- Keep the base URL and model configurable through settings.
+
+### Done When
+
+- Real provider can be used after user configuration.
 - AI failure does not block workout completion.
+- AI failure does not delete daily summary.
+- A readable retry/error state is displayed.
 
 ### Optional
+
 This task may be postponed until after the local MVP is stable.
 
 ---
 
-## Task 14: Calendar Screen
+## Task 15: Calendar Screen
 
 ### Goal
+
 Show workout schedule and completion history.
 
 ### Requirements
 
 - Show week or month calendar.
 - Mark workout days.
-- Mark completed, missed, planned, and rest days.
+- Mark completed, missed, planned, partial, and rest days.
 - Tap date to view related workout or summary.
 
 ### Done When
@@ -385,9 +460,10 @@ Show workout schedule and completion history.
 
 ---
 
-## Task 15: Local Reminder Settings
+## Task 16: Local Reminder Settings
 
 ### Goal
+
 Add workout reminder configuration.
 
 ### Requirements
@@ -405,9 +481,10 @@ Add workout reminder configuration.
 
 ---
 
-## Task 16: Diet Screen
+## Task 17: Diet Screen
 
 ### Goal
+
 Implement lightweight diet planning and logging.
 
 ### Requirements
@@ -415,7 +492,7 @@ Implement lightweight diet planning and logging.
 - Show today’s diet suggestion placeholder.
 - Add text fields for breakfast, lunch, dinner, and snack.
 - Save diet log locally.
-- Add mock AI diet tip if AI module exists.
+- Add local mock or remote AI diet tip if AI module exists.
 
 ### Done When
 
@@ -424,9 +501,10 @@ Implement lightweight diet planning and logging.
 
 ---
 
-## Task 17: Analytics Screen
+## Task 18: Analytics Screen
 
 ### Goal
+
 Display basic historical progress.
 
 ### Requirements
@@ -446,29 +524,10 @@ Display:
 
 ---
 
-## Task 18: Settings Screen
-
-### Goal
-Centralize app configuration.
-
-### Requirements
-
-- Weekly plan type selector.
-- Reminder settings.
-- AI provider placeholder.
-- API key field placeholder or local-only setting.
-- Data reset button, optional.
-
-### Done When
-
-- User can configure core MVP settings.
-- Settings persist locally.
-
----
-
 ## Task 19: MVP Polish Pass
 
 ### Goal
+
 Make the app usable end to end.
 
 ### Requirements
@@ -479,6 +538,7 @@ Make the app usable end to end.
 - Ensure data persists.
 - Ensure no screen is a dead end.
 - Remove unused placeholders that confuse the user.
+- Verify design consistency against `design.md`.
 
 ### Done When
 
@@ -489,6 +549,7 @@ Make the app usable end to end.
 ## Task 20: Final MVP Verification
 
 ### Goal
+
 Verify the MVP against acceptance criteria.
 
 ### Requirements
@@ -497,6 +558,7 @@ Verify the MVP against acceptance criteria.
 - Run available tests.
 - Manually check flows from `spec/ACCEPTANCE.md`.
 - Document known limitations.
+- Report Debug APK path.
 
 ### Done When
 
@@ -508,11 +570,11 @@ Verify the MVP against acceptance criteria.
 Use this prompt when starting implementation:
 
 ```text
-Please read spec/MVP_SPEC.md, spec/ARCHITECTURE.md, spec/TASK_BREAKDOWN.md, and spec/ACCEPTANCE.md.
+Please read README.md, design.md, spec/MVP_SPEC.md, spec/ARCHITECTURE.md, spec/TASK_BREAKDOWN.md, spec/ACCEPTANCE.md, spec/APK_PLAN.md, spec/CODEX_WORKFLOW.md, and spec/REVIEW_PROCESS.md.
 
 Create a new branch named feat/fitness-mvp-v1 from the current spec branch or from main after the spec branch is merged.
 
-Implement Task 01 only: initialize a native Android project using Kotlin and Jetpack Compose. Create a buildable app with a placeholder Home screen. Do not implement workout logic, AI integration, database, or reminders yet.
+Implement Task 01 only: initialize a native Android project using Kotlin, Jetpack Compose, and Material 3. Create a buildable app with a placeholder Home screen using the visual direction from design.md. Do not implement workout logic, AI integration, database, reminders, or credential storage yet.
 
-After implementation, run the available build command, commit the changes, and report changed files, build result, and any limitations.
+After implementation, run the available build command, commit the changes, and report changed files, build result, APK path, tests run, and any limitations.
 ```
