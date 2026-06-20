@@ -3,10 +3,10 @@
 Use this review loop for every Codex implementation task:
 
 ```text
-Task scope -> Diff -> Build -> APK -> Acceptance -> Repair notes -> Recheck
+Task scope -> Diff -> Architecture -> Design -> Build -> APK -> Acceptance -> Repair notes -> Recheck
 ```
 
-A task is not accepted just because files were generated. It is accepted only when the task is within scope, buildable, and verifiable.
+A task is not accepted just because files were generated. It is accepted only when the task is within scope, buildable, designed correctly, and verifiable.
 
 ## 1. Review Inputs
 
@@ -56,7 +56,23 @@ Check:
 - local-first direction is preserved;
 - unnecessary backend systems are not introduced.
 
-## 5. Build Review
+## 5. Design Review
+
+For UI tasks, compare the implementation with `design.md`.
+
+Check:
+
+- page purpose is clear;
+- primary action is visible;
+- empty state is handled;
+- secondary screens have back navigation;
+- bottom navigation follows the design contract;
+- component names and behavior follow the design contract;
+- no screen is a dead end.
+
+If a screen is usable but does not fully match the design, decide whether to request changes or document the limitation for a later polish task.
+
+## 6. Build Review
 
 Every implementation task should report a build command.
 
@@ -73,7 +89,7 @@ Acceptable result:
 
 If build fails because of code or project configuration, request repair.
 
-## 6. APK Review
+## 7. APK Review
 
 When an APK milestone is expected, verify that Codex reports the APK path.
 
@@ -89,7 +105,7 @@ For early milestones, also check:
 - visible screen exists;
 - navigation works if Task 02 is included.
 
-## 7. Acceptance Review
+## 8. Acceptance Review
 
 Compare the result with `spec/ACCEPTANCE.md`.
 
@@ -97,7 +113,7 @@ For each task, review only the acceptance items relevant to that task.
 
 Do not require full MVP acceptance during Task 01 or Task 02.
 
-## 8. Repair Notes Format
+## 9. Repair Notes Format
 
 If changes are needed, write repair notes like this:
 
@@ -119,18 +135,20 @@ Rebuild command:
 ./gradlew assembleDebug
 ```
 
-## 9. Approval Rule
+## 10. Approval Rule
 
 Approve only when:
 
 1. task scope is correct;
 2. diff is reasonable;
-3. build result is acceptable;
-4. APK path is reported when relevant;
-5. acceptance items for the task are satisfied;
-6. no high-risk unrelated change is present.
+3. architecture follows `spec/ARCHITECTURE.md`;
+4. UI follows `design.md` when applicable;
+5. build result is acceptable;
+6. APK path is reported when relevant;
+7. acceptance items for the task are satisfied;
+8. no high-risk unrelated change is present.
 
-## 10. Next Task Rule
+## 11. Next Task Rule
 
 After approval, the next instruction to Codex should be the next unfinished task from `spec/TASK_BREAKDOWN.md`.
 
