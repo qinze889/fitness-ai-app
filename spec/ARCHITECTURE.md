@@ -15,7 +15,7 @@ The goal is not to build a complex commercial platform. The goal is to build a s
 3. exercise library and exercise detail pages;
 4. workout completion logging;
 5. daily summary input;
-6. AI-generated review and optimization suggestions;
+6. optional AI-generated review and optimization suggestions;
 7. simple diet logging and analytics.
 
 The architecture should make the first implementation easy for Codex to execute step by step.
@@ -27,17 +27,19 @@ Use native Android for MVP v1.
 ```text
 Language: Kotlin
 UI: Jetpack Compose
+Design system: Material 3 + root design.md
 Architecture pattern: MVVM
 State: ViewModel + StateFlow
 Navigation: Jetpack Navigation Compose
 Local database: Room
 Settings storage: DataStore
+Secure local credential storage: Android Keystore + encrypted local storage if feasible
 Background work: WorkManager where needed
 Local notifications: Android notification channel + scheduled local reminder
 Networking: OkHttp or Retrofit
 JSON: Kotlinx Serialization or Moshi
 Minimum backend: none required for MVP v1
-AI provider: hidden behind AIService abstraction
+AI provider: local mock by default; optional DeepSeek/OpenAI-compatible remote provider configured in app settings
 ```
 
 ## 3. Why Native Android
@@ -60,11 +62,15 @@ Codex should create a clean Android project structure similar to:
 ```text
 fitness-ai-app/
   README.md
+  design.md
   spec/
     MVP_SPEC.md
     ARCHITECTURE.md
     TASK_BREAKDOWN.md
     ACCEPTANCE.md
+    APK_PLAN.md
+    CODEX_WORKFLOW.md
+    REVIEW_PROCESS.md
   app/
     build.gradle.kts
     src/main/
@@ -79,6 +85,7 @@ fitness-ai-app/
           notification/
           network/
           settings/
+          security/
           ui/
         feature/
           home/
@@ -106,9 +113,11 @@ The `core` layer contains reusable infrastructure:
 - Room database setup;
 - repository interfaces;
 - notification scheduler;
-- AI network client abstraction;
+- AI integration contracts and network clients;
 - app settings storage;
-- shared UI components.
+- local credential storage helper;
+- shared UI components;
+- theme tokens from `design.md`.
 
 The core layer must not depend on feature screens.
 
@@ -121,10 +130,10 @@ Each feature owns its UI, ViewModel, and screen-specific state:
 - `workout`: today workout execution;
 - `exercise`: exercise detail;
 - `checkin`: daily text/voice summary;
-- `ai`: AI review rendering and retry behavior;
+- `ai`: AI advice rendering, retry behavior, local/remote provider state;
 - `diet`: diet logging and diet suggestion;
 - `analytics`: score and completion history;
-- `settings`: reminder and API settings.
+- `settings`: plan, reminder, AI provider, and credential settings.
 
 Feature screens should call repositories or services through ViewModels, not directly from Composables.
 
@@ -139,15 +148,18 @@ ExerciseEntity
 WorkoutExerciseLogEntity
 DailyReviewEntity
 DietLogEntity
+AIAdviceEntity
 AppSettings
+AIProviderSettings
 ```
 
-Recommended rule:
+Recommended rules:
 
 - seed the initial exercise library locally;
 - store user workout logs locally;
-- store AI review results locally after generation;
-- do not require login or cloud sync in MVP v1.
+- store AI advice results locally after generation;
+- do not require login or cloud sync in MVP v1;
+- do not require a custom backend server in MVP v1.
 
 ## 7. Repository Pattern
 
@@ -159,41 +171,112 @@ ExerciseRepository
 DailyReviewRepository
 DietRepository
 SettingsRepository
-AIReviewRepository
+AIAdviceRepository
 ```
 
 ViewModels should depend on repositories, not directly on DAO objects.
 
 ## 8. AI Integration Architecture
 
-AI must be isolated behind a service interface.
+AI is optional. The app must work completely without a remote provider.
+
+The AI module should be a real configurable integration module, not only an empty abstraction. It should include:
+
+```text
+AIProviderSettings
+AIAdviceRepository
+AIAdvicePromptBuilder
+LocalMockAIClient
+DeepSeekAIClient
+OpenAICompatibleAIClient
+CredentialStore
+```
+
+### 8.1 Provider Modes
+
+Supported modes:
+
+```text
+Local Mock
+DeepSeek
+OpenAI Compatible
+```
+
+Default mode:
+
+```text
+Local Mock
+```
+
+The user should be able to configure remote AI inside the app, preferably in `Settings -> AI Settings`.
+
+### 8.2 Recommended DeepSeek Defaults
+
+```text
+Base URL: https://api.deepseek.com
+Model: deepseek-v4-flash
+Endpoint pattern: /chat/completions
+```
+
+Codex must keep these values configurable. They must not be scattered across UI code.
+
+### 8.3 AI Interface
+
+Use a small interface for the app-level use cases:
 
 ```kotlin
-interface AIService {
-    suspend fun generateDailyReview(input: DailyReviewInput): Result<DailyReviewOutput>
-    suspend fun generateDietSuggestion(input: DietSuggestionInput): Result<DietSuggestionOutput>
+interface AIAdviceClient {
+    suspend fun generateDailyAdvice(input: DailyAdviceInput): Result<DailyAdviceOutput>
+    suspend fun generateDietAdvice(input: DietAdviceInput): Result<DietAdviceOutput>
+    suspend fun testConnection(settings: AIProviderSettings): Result<Unit>
 }
 ```
 
-MVP should start with a mock implementation:
+The UI should not call network code directly.
+
+### 8.4 Credential Handling
+
+Rules:
+
+- A real user credential must never be hard-coded into source code.
+- A real user credential must never be committed to Git.
+- A real user credential must never be printed in logs.
+- Credential input must be optional.
+- If no credential is configured, the app must fall back to Local Mock mode or show a clear not-configured state.
+- Prefer Android Keystore + DataStore for local storage.
+- If secure storage is postponed, mark the debug-only limitation clearly and add an upgrade task.
+
+### 8.5 Prompt Builder
+
+`AIAdvicePromptBuilder` should convert local data into a compact, structured request:
 
 ```text
-MockAIService
+- date
+- workout theme
+- planned exercises
+- completed exercises
+- skipped exercises
+- RPE
+- daily score
+- user summary
+- diet notes
 ```
 
-Then add a real implementation later:
+The prompt should ask for concise, actionable output with these fields:
 
 ```text
-RemoteAIService
+daily_review
+risk_notes
+next_workout_adjustment
+diet_tip
+motivation
 ```
-
-This prevents UI development from being blocked by API keys, model selection, provider limits, or network errors.
 
 ## 9. AI Safety Rules
 
 The app must not present AI output as medical diagnosis.
 
-When the user mentions pain, dizziness, chest tightness, injury, numbness, or abnormal symptoms, AI review should prioritize:
+When the user mentions pain, dizziness, chest tightness, injury, numbness, or abnormal symptoms, AI advice should prioritize:
 
 1. reduce training intensity;
 2. stop risky movement;
@@ -225,8 +308,8 @@ Use a bottom navigation layout for core areas:
 
 ```text
 Home
-Calendar
 Workout
+Calendar
 Diet
 Settings
 ```
@@ -236,58 +319,39 @@ Secondary screens:
 ```text
 ExerciseDetail
 DailyCheckIn
-AIReview
+AIAdvice
 Analytics
+AISettings
 ```
 
 The navigation graph should be explicit and easy to test.
 
 ## 12. UI Direction
 
-The MVP UI should be clean, practical, and fast.
-
-Avoid heavy animation or overly complex visual systems in v1.
+The MVP UI must follow root `design.md`.
 
 Design style:
 
-- dark or light theme is acceptable;
-- use Material 3 components;
-- use clear cards for workout, exercise, score, and AI review;
-- prioritize tap reliability over fancy motion;
-- keep forms simple.
+- Material 3;
+- dark theme first is acceptable and preferred by current concept;
+- clear card-based screens;
+- strong primary actions;
+- visible empty, completion, error, and not-configured states;
+- prioritize tap reliability over fancy motion.
+
+Avoid heavy animation or overly complex visual systems in v1.
 
 ## 13. Testing Direction
 
-Minimum test expectations:
+Recommended test areas:
 
-- unit test daily score calculation;
-- unit test workout completion rate calculation;
-- unit test AI output parsing if real API is added;
-- manual test all acceptance flows in `spec/ACCEPTANCE.md`.
+- daily score calculation;
+- plan generation;
+- exercise seed data integrity;
+- AI prompt builder output shape;
+- local mock AI behavior;
+- AI not-configured state;
+- settings persistence;
+- navigation smoke test if practical.
 
-Automated UI tests are nice but not required for the first MVP implementation.
-
-## 14. Codex Guardrails
-
-Codex must follow these rules:
-
-1. Do not replace the chosen stack without explicit instruction.
-2. Do not build login, subscription, social features, wearable sync, or cloud backend in MVP v1.
-3. Do not hard-code AI provider logic inside UI components.
-4. Do not block local workout completion when AI API fails.
-5. Do not store API keys in source code.
-6. Keep implementation local-first.
-7. Prefer small commits aligned with `spec/TASK_BREAKDOWN.md`.
-8. After each task, run available build/test commands and report what passed or failed.
-
-## 15. Implementation Philosophy
-
-This branch is a specification branch. It should guide implementation, not contain experimental half-built product code.
-
-Recommended workflow:
-
-```text
-spec/fitness-mvp-v1 -> feat/fitness-mvp-v1
-```
-
-The feature branch should implement tasks one by one. The spec branch should remain the contract.
+Codex should run available tests and `./gradlew assembleDebug` after each implementation task.
