@@ -3,7 +3,7 @@
 Use a closed-loop workflow:
 
 ```text
-Spec -> Task -> Build -> Report -> Review -> Repair -> Next Task
+Spec -> Design -> Task -> Build -> Report -> Review -> Repair -> Next Task
 ```
 
 Codex should work on `feat/fitness-mvp-v1`, one task at a time.
@@ -14,11 +14,12 @@ Codex should read these documents before starting implementation:
 
 1. `spec/MVP_SPEC.md`
 2. `spec/ARCHITECTURE.md`
-3. `spec/TASK_BREAKDOWN.md`
-4. `spec/ACCEPTANCE.md`
-5. `spec/APK_PLAN.md`
-6. `spec/CODEX_WORKFLOW.md`
-7. `spec/REVIEW_PROCESS.md`
+3. `design.md`
+4. `spec/TASK_BREAKDOWN.md`
+5. `spec/ACCEPTANCE.md`
+6. `spec/APK_PLAN.md`
+7. `spec/CODEX_WORKFLOW.md`
+8. `spec/REVIEW_PROCESS.md`
 
 ## 2. Branch Rule
 
@@ -45,7 +46,23 @@ Task 03 only
 
 Do not combine multiple unrelated tasks in one pass.
 
-## 4. Build Rule
+## 4. Design Rule
+
+When a task touches UI, Codex must follow `design.md`.
+
+Use `design.md` for:
+
+- page structure;
+- component layout;
+- button behavior;
+- empty states;
+- navigation behavior;
+- visual style;
+- design acceptance.
+
+If a UI requirement is unclear, Codex should choose the simplest design that follows `design.md` and report the assumption.
+
+## 5. Build Rule
 
 After each task, run:
 
@@ -55,7 +72,7 @@ After each task, run:
 
 If another valid Android build command is used, report the exact command.
 
-## 5. APK Rule
+## 6. APK Rule
 
 When an APK is expected, report the output path.
 
@@ -67,7 +84,7 @@ app/build/outputs/apk/debug/app-debug.apk
 
 If the path differs, report the actual path.
 
-## 6. Report Format
+## 7. Report Format
 
 After each task, report:
 
@@ -82,19 +99,19 @@ Limitations:
 Next recommended task:
 ```
 
-## 7. Scope Rule
+## 8. Scope Rule
 
 Stay inside the current task scope.
 
 For MVP v1, avoid adding major systems that are not requested by the task, such as account systems, paid features, social features, cloud sync, wearable integration, computer vision posture detection, full calorie database, or marketplace features.
 
-## 8. Spec Rule
+## 9. Spec Rule
 
 Implementation tasks should not edit files under `spec/`.
 
 If a spec change seems necessary, stop and report the reason instead of silently changing the contract.
 
-## 9. Repair Rule
+## 10. Repair Rule
 
 If review or build fails:
 
@@ -104,13 +121,14 @@ If review or build fails:
 4. commit the fix to the same branch;
 5. report the result.
 
-## 10. Completion Rule
+## 11. Completion Rule
 
 A task is complete only when:
 
 1. the implementation matches the task;
-2. build result is reported;
-3. APK path is reported when relevant;
-4. unrelated features are not added;
-5. limitations are documented;
-6. the branch is ready for review.
+2. design follows `design.md` for UI tasks;
+3. build result is reported;
+4. APK path is reported when relevant;
+5. unrelated features are not added;
+6. limitations are documented;
+7. the branch is ready for review.
