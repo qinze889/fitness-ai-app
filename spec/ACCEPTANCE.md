@@ -13,7 +13,7 @@ The MVP is not accepted just because code exists. It is accepted only when the c
 Core loop:
 
 ```text
-Open app -> select plan -> view today's workout -> open exercise detail -> mark completion -> submit daily summary -> generate AI review -> view history/calendar
+Open app -> select plan -> view today's workout -> open exercise detail -> mark completion -> submit daily summary -> generate local or remote AI advice -> view history/calendar
 ```
 
 ## 2. General Acceptance Rules
@@ -26,10 +26,12 @@ The MVP must satisfy these rules:
 4. Workout plan data persists after app restart.
 5. Workout completion data persists after app restart.
 6. Daily summary data persists after app restart.
-7. AI review flow works with mock AI even if no real API key exists.
-8. AI/API failure must not block workout completion.
+7. AI advice flow works with local mock mode even if no remote provider is configured.
+8. Remote AI/API failure must not block workout completion.
 9. No login or cloud backend is required for MVP v1.
 10. UI must not contain dead-end buttons for core flows.
+11. UI tasks must follow root `design.md`.
+12. No real remote AI credential may be hard-coded, committed, or logged.
 
 ## 3. Build Acceptance
 
@@ -55,15 +57,33 @@ If the exact command differs, Codex must report the command used.
 - Build command exits successfully; or
 - if build fails because of environment limitation, Codex must document the exact failure and confirm whether code-level compilation issues remain.
 
-## 4. Navigation Acceptance
+## 4. Design Acceptance
+
+### Required
+
+- `design.md` exists in the repository root.
+- UI screens use Material 3.
+- Core screen structure follows `design.md`.
+- Primary actions are visible.
+- Empty states are handled.
+- Loading, success, error, completed, skipped, and not-configured states are handled where relevant.
+
+### Accepted When
+
+- Home, Workout, Exercise Detail, Daily Check-in, AI Advice, Calendar, Diet, and Settings are readable and navigable.
+- Completed and skipped workout states are visually distinguishable.
+- AI-not-configured state provides a clear path to Settings.
+- No screen is a dead end.
+
+## 5. Navigation Acceptance
 
 ### Required Screens
 
 Main tabs:
 
 - Home;
-- Calendar;
 - Workout;
+- Calendar;
 - Diet;
 - Settings.
 
@@ -71,7 +91,8 @@ Secondary screens:
 
 - Exercise Detail;
 - Daily Check-in;
-- AI Review;
+- AI Advice;
+- AI Settings;
 - Analytics, if implemented.
 
 ### Test Steps
@@ -82,6 +103,7 @@ Secondary screens:
 4. Tap an exercise card.
 5. Navigate back.
 6. Open Daily Check-in.
+7. Open AI Settings from Settings.
 
 ### Accepted When
 
@@ -90,7 +112,7 @@ Secondary screens:
 - No core route crashes.
 - User always has a way to return to a main screen.
 
-## 5. Workout Plan Acceptance
+## 6. Workout Plan Acceptance
 
 ### Required
 
@@ -117,7 +139,7 @@ MVP should support both if possible. If implementation starts with one default p
 - Workout days are generated from the selected plan.
 - App handles empty state if no plan is configured.
 
-## 6. Exercise Library Acceptance
+## 7. Exercise Library Acceptance
 
 ### Required Initial Exercises
 
@@ -162,7 +184,7 @@ Each exercise must include:
 - Exercise detail is useful enough for a beginner to understand the movement.
 - Missing fields are not shown as broken placeholders.
 
-## 7. Today Workout Acceptance
+## 8. Today Workout Acceptance
 
 ### Required
 
@@ -192,7 +214,7 @@ Each exercise item should show:
 - Completed and skipped states are visually distinguishable.
 - Workout can proceed even if some exercises are skipped.
 
-## 8. Daily Score Acceptance
+## 9. Daily Score Acceptance
 
 ### Required Formula
 
@@ -220,7 +242,7 @@ Where:
 - Formula is implemented in a testable function.
 - At least basic unit tests or documented manual checks exist.
 
-## 9. Daily Check-in Acceptance
+## 10. Daily Check-in Acceptance
 
 ### Required
 
@@ -255,13 +277,13 @@ Recommended prompts:
 - Summary affects daily score if applicable.
 - Empty summary is handled gracefully.
 
-## 10. AI Review Acceptance
+## 11. AI Advice Acceptance
 
 ### Required for MVP
 
-Mock AI review must work before real AI integration.
+Local mock AI advice must work before real remote integration.
 
-The AI review should return:
+The AI advice should return:
 
 - daily review;
 - risk notes;
@@ -272,18 +294,45 @@ The AI review should return:
 ### Test Steps
 
 1. Submit daily summary.
-2. Tap generate AI review.
-3. Confirm review appears.
-4. Simulate or handle AI failure path if real API exists.
+2. Tap generate AI advice.
+3. Confirm advice appears.
+4. Confirm app works without remote AI provider configuration.
+5. Simulate or handle remote AI failure path if remote provider exists.
 
 ### Accepted When
 
-- Mock review works without API key.
-- Result is displayed in a clear card.
+- Local mock advice works without remote configuration.
+- Result is displayed in clear cards.
 - AI failure does not delete user summary.
 - AI failure does not block workout completion.
+- The app clearly distinguishes local mode, not-configured remote mode, loading state, success state, and error state where relevant.
 
-## 11. AI Safety Acceptance
+## 12. AI Settings Acceptance
+
+### Required
+
+Settings should support optional remote AI configuration:
+
+- enable/disable AI suggestions;
+- provider selector: Local Mock, DeepSeek, OpenAI Compatible;
+- base URL;
+- model;
+- local credential input with masked display;
+- test connection action;
+- clear credential action;
+- privacy note explaining that workout summary and diet notes may be sent to the chosen provider when remote AI is enabled.
+
+### Accepted When
+
+- App works without remote AI settings.
+- AI Settings values persist locally after restart.
+- User can clear saved credential.
+- No real credential is hard-coded in source.
+- No real credential appears in README/spec files.
+- Logs do not print full credential values.
+- Remote failure produces readable error UI.
+
+## 13. AI Safety Acceptance
 
 ### Required
 
@@ -296,7 +345,7 @@ If user summary contains warning terms such as:
 - numbness;
 - severe discomfort;
 
-then AI review or mock review should prioritize caution.
+then AI advice or local mock advice should prioritize caution.
 
 ### Accepted When
 
@@ -304,7 +353,7 @@ then AI review or mock review should prioritize caution.
 - App suggests lowering intensity, resting, or seeking professional advice when symptoms are serious.
 - UI communicates that AI output is guidance, not medical instruction.
 
-## 12. Calendar Acceptance
+## 14. Calendar Acceptance
 
 ### Required
 
@@ -325,7 +374,7 @@ Calendar should show workout schedule and completion status.
 - Completed/missed/rest states are distinguishable.
 - Date tap opens relevant workout or summary if available.
 
-## 13. Reminder Acceptance
+## 15. Reminder Acceptance
 
 ### Required
 
@@ -348,7 +397,7 @@ Workout reminder should be configurable locally.
 
 Note: exact notification delivery may depend on device/emulator environment. If it cannot be fully verified, Codex must document the limitation.
 
-## 14. Diet Acceptance
+## 16. Diet Acceptance
 
 ### Required
 
@@ -366,9 +415,9 @@ Diet module should support lightweight daily logging.
 
 - Diet log is saved locally.
 - Diet screen does not require calorie database.
-- AI diet tip is optional but should use mock flow if AI module exists.
+- AI diet tip is optional but should use local mock flow if AI module exists.
 
-## 15. Analytics Acceptance
+## 17. Analytics Acceptance
 
 ### Required
 
@@ -387,7 +436,7 @@ Minimum metrics:
 - Metrics update from local workout logs.
 - Display is readable and not misleading.
 
-## 16. Settings Acceptance
+## 18. Settings Acceptance
 
 ### Required
 
@@ -396,16 +445,16 @@ Settings should support:
 - weekly plan type;
 - reminder enable/disable;
 - reminder time;
-- AI provider placeholder or configuration;
-- local-only API key warning if API input exists.
+- AI Settings entry point;
+- local-only data reset warning if reset exists.
 
 ### Accepted When
 
 - Settings persist locally.
-- No secret is committed to source code.
 - User can understand what settings affect.
+- Settings screen links to AI Settings.
 
-## 17. Persistence Acceptance
+## 19. Persistence Acceptance
 
 ### Required
 
@@ -417,53 +466,5 @@ The following data must persist after app restart:
 - daily check-in summaries;
 - diet logs;
 - reminder settings;
-- AI review result if generated.
-
-### Accepted When
-
-- Restarting the app does not reset the core user loop.
-
-## 18. Out-of-Scope Rejection Criteria
-
-The MVP should be rejected or revised if Codex adds major unnecessary scope, such as:
-
-- user account system;
-- payment or subscription;
-- social community;
-- cloud sync;
-- wearable integration;
-- computer vision posture detection;
-- full calorie database;
-- coach marketplace;
-- medical diagnosis logic.
-
-## 19. Final Manual MVP Test
-
-A reviewer should be able to perform this full flow:
-
-1. Install and open the app.
-2. Select 4-day training plan.
-3. Open Home.
-4. Open Today Workout.
-5. Tap Bench Press detail.
-6. Return to workout.
-7. Mark Bench Press completed.
-8. Mark Dumbbell Fly skipped.
-9. Submit daily summary: “今天卧推完成了，飞鸟没做完，肩膀有点酸。”
-10. Generate mock AI review.
-11. See caution note about shoulder discomfort.
-12. Open Calendar and see today marked as partial/completed.
-13. Open Diet and save a simple diet log.
-14. Restart app.
-15. Confirm records still exist.
-
-## 20. MVP Accepted When
-
-The MVP is accepted when:
-
-- build passes or environment issues are clearly documented;
-- the final manual MVP test can be completed;
-- core data persists locally;
-- mock AI review works;
-- no major out-of-scope features were added;
-- known limitations are documented.
+- AI advice result if generated;
+- AI provider settings if configured.
