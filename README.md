@@ -11,6 +11,8 @@ This repository is currently in the specification stage. The MVP contract lives 
 - `spec/TASK_BREAKDOWN.md` — step-by-step Codex implementation plan
 - `spec/ACCEPTANCE.md` — MVP verification and acceptance checklist
 - `spec/APK_PLAN.md` — stable Debug APK delivery plan and Codex App prompts
+- `spec/CODEX_WORKFLOW.md` — Codex execution workflow
+- `spec/REVIEW_PROCESS.md` — review and approval process
 
 ## Recommended Workflow
 
